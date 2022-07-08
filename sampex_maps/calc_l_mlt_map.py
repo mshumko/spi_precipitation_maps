@@ -40,6 +40,7 @@ class L_MLT_Map:
             raise NotImplementedError
         else:
             self.dates = self._get_dates()
+            self.dates = [date for date in self.dates if date > datetime(1997, 1, 1)]
         return
 
     def loop(self):
@@ -49,6 +50,8 @@ class L_MLT_Map:
         for date in progressbar(self.dates):
             try:
                 self.hilt = sampex.HILT(date)
+                if self.hilt.state != 4:
+                    continue  # I dont' have the state 1-3 loaders written yet.
                 self.hilt.load()
             except (ValueError, AssertionError, NotImplementedError) as err:
                 # Sometimes the HILT time stamps are out of order. We think the
@@ -72,7 +75,7 @@ class L_MLT_Map:
                 else:
                     raise
             # Magic merging!
-            merged = pd.merge_asof(self.hilt, self.attitude, left_index=True, 
+            merged = pd.merge_asof(self.hilt.data, self.attitude.data, left_index=True, 
                 right_index=True, tolerance=pd.Timedelta(seconds=3), 
                 direction='nearest')
             
@@ -86,12 +89,12 @@ class L_MLT_Map:
         for i, (start_L, end_L) in enumerate(zip(self.L_bins[:-1], self.L_bins[1:])):
             for j, (start_MLT, end_MLT) in enumerate(zip(self.MLT_bins[:-1], self.MLT_bins[1:])):
                 filtered_data = merged.loc[:, 
-                    ('L_Shell' > start_L) &
-                    ('L_Shell' <= end_L) &
-                    ('MLT' > start_MLT) &
-                    ('MLT' <= end_MLT)
+                    (merged.loc[:, 'L_Shell'] > start_L) &
+                    (merged.loc[:, 'L_Shell'] <= end_L) &
+                    (merged.loc[:,'MLT'] > start_MLT) &
+                    (merged.loc[:, 'MLT'] <= end_MLT)
                 ]
-                self.H[i, j] = filtered_data.quantile(q=self.quantile)
+                self.H[i, j] = filtered_data.quantile(q=self.quantile)['counts']
         return
 
     def _yeardoy2date(self, yeardoy):
