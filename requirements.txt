@@ -2,6 +2,8 @@
 # users who install this as a component of their work---this will probably
 # cause dependency hell (Google it)).
 matplotlib
+numpy
+pandas
 sampex
 pyshp==2.1.3
 
