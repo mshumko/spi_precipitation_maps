@@ -9,9 +9,9 @@ import sampex
 from sampex_maps.utils import progressbar
 
 class L_MLT_Map:
-    def __init__(self, L_bins, MLT_bins, instrument='HILT', counts_col='counts', times=None, quantile=0.5) -> None:
+    def __init__(self, L_bins, MLT_bins, instrument='HILT', counts_col='counts', times=None) -> None:
         """
-        Calculate L-MLT map of SAMPEX precipitation. Once you run L_MLT_Map.loop(), the 
+        Calculate L-MLT map of the mean SAMPEX precipitation. Once you run L_MLT_Map.loop(), the 
         "H" attribute contains the histogram.
 
         Parameters
@@ -26,15 +26,12 @@ class L_MLT_Map:
             What counts column to calculate the quantile.
         times: np.array
             An shape = (n, 2) array of start and end times. Not implemented yet.
-        quantile: float
-            What quantile to calculate. Default is 0.5 (median).
         """
         self.L_bins = L_bins
         self.MLT_bins = MLT_bins
         self.H = np.zeros((L_bins.shape[0]-1, MLT_bins.shape[0]-1))
         self.instrument = instrument.upper()
         self.counts_col = counts_col.lower()
-        self.quantile = quantile
         assert instrument.upper() in ['HILT', 'PET', 'LICA']
 
         if times is not None:
@@ -99,7 +96,12 @@ class L_MLT_Map:
                     (merged.loc[:, 'MLT'] <= end_MLT),
                     :
                 ]
-                self.H[i, j] = filtered_data.quantile(q=self.quantile)[self.counts_col]
+                if filtered_data.shape[0] == 0:
+                    continue
+                # TODO: Think about how to calculate the incremental mean
+                # https://math.stackexchange.com/questions/106700/incremental-averaging
+                # https://ubuntuincident.wordpress.com/2012/04/25/calculating-the-average-incrementally/
+                self.H[i, j] += filtered_data.mean()[self.counts_col]
         return
 
     def _yeardoy2date(self, yeardoy):
