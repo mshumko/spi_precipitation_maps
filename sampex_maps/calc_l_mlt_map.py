@@ -9,7 +9,7 @@ import sampex
 from sampex_maps.utils import progressbar
 
 class L_MLT_Map:
-    def __init__(self, L_bins, MLT_bins, instrument='HILT', times=None, stat=50) -> None:
+    def __init__(self, L_bins, MLT_bins, instrument='HILT', times=None, quantile=0.5) -> None:
         """
         Calculate L-MLT map of SAMPEX precipitation. Once you run L_MLT_Map.loop(), the 
         "H" attribute contains the histogram.
@@ -24,11 +24,14 @@ class L_MLT_Map:
             The SAMPEX instrument. Can be 'HILT', 'PET', or 'LICA'.
         times: np.array
             An shape = (n, 2) array of start and end times. Not implemented yet.
-        stat: float
-            What percentile to calculate. Default is the median.
+        quantile: float
+            What quantile to calculate. Default is 0.5 (median).
         """
+        self.L_bins = L_bins
+        self.MLT_bins = MLT_bins
         self.H = np.zeros((L_bins.shape[0]-1, MLT_bins.shape[0]-1))
         self.instrument = instrument.upper()
+        self.quantile = quantile
         assert instrument.upper() in ['HILT', 'PET', 'LICA']
 
         if times is not None:
@@ -44,8 +47,52 @@ class L_MLT_Map:
         Loop over the SAMPEX files and bin each day's data by L and MLT.
         """
         for date in progressbar(self.dates):
-            self.hilt = sampex.HILT(date)
-            self.attitude = sampex.Attitude(date)
+            try:
+                self.hilt = sampex.HILT(date)
+                self.hilt.load()
+            except (ValueError, AssertionError, NotImplementedError) as err:
+                # Sometimes the HILT time stamps are out of order. We think the
+                # data quality is compromised so we ignore it.
+                if 'data is not in order for' in str(err):
+                    continue
+                elif '3 matched HILT files found.' in str(err):
+                    continue
+                elif 'State 1 and 3 are not implemented yet.' in str(err):
+                    continue
+                else:
+                    raise
+
+            try:
+                self.attitude = sampex.Attitude(date)
+                self.attitude.load()
+            except ValueError as err:
+                # Sometimes there is HILT data and no attitude data.
+                if 'A matched file not found in' in str(err):
+                    continue
+                else:
+                    raise
+            # Magic merging!
+            merged = pd.merge_asof(self.hilt, self.attitude, left_index=True, 
+                right_index=True, tolerance=pd.Timedelta(seconds=3), 
+                direction='nearest')
+            
+            self.bin_data(merged)
+
+    def bin_data(self, merged):
+        """
+        Groups the SAMPEX data in each L and MLT and calculates self.stat statistic
+        on the grouped counts.
+        """
+        for i, (start_L, end_L) in enumerate(zip(self.L_bins[:-1], self.L_bins[1:])):
+            for j, (start_MLT, end_MLT) in enumerate(zip(self.MLT_bins[:-1], self.MLT_bins[1:])):
+                filtered_data = merged.loc[:, 
+                    ('L_Shell' > start_L) &
+                    ('L_Shell' <= end_L) &
+                    ('MLT' > start_MLT) &
+                    ('MLT' <= end_MLT)
+                ]
+                self.H[i, j] = filtered_data.quantile(q=self.quantile)
+        return
 
     def _yeardoy2date(self, yeardoy):
         """
