@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import sampex
+import progressbar
 
-from sampex_maps.utils import progressbar
+# from sampex_maps.utils import progressbar
 
 class L_MLT_Map:
     def __init__(self, L_bins, MLT_bins, instrument='HILT', counts_col='counts', times=None) -> None:
@@ -49,7 +50,7 @@ class L_MLT_Map:
         """
         Loop over the SAMPEX files and bin each day's data by L and MLT.
         """
-        for date in progressbar(self.dates):
+        for date in progressbar.progressbar(self.dates, redirect_stdout=True):
             print(f'Processing SAMPEX-{self.instrument} on {date.date()}')
             try:
                 self.hilt = sampex.HILT(date)
@@ -160,4 +161,5 @@ if __name__ == '__main__':
         plt.colorbar(label='mean counts')
         plt.xlabel('MLT')
         plt.ylabel('L-Shell')
+        plt.yscale('log')
         plt.show()
