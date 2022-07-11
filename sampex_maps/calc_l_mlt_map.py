@@ -3,6 +3,7 @@ import pathlib
 import re
 
 import matplotlib.pyplot as plt
+import matplotlib.colors
 import pandas as pd
 import numpy as np
 import sampex
@@ -91,9 +92,23 @@ class L_MLT_Map:
                 else:
                     raise
             
-            self.bin_data(merged)
+            self._bin_data(merged)
+        return
 
-    def bin_data(self, merged):
+    def save_map(self, filename):
+        """
+        Save map to a csv file.
+        """
+        save_path = pathlib.Path(__file__).parent / 'data' / filename
+        df = pd.DataFrame(
+            data=self.mean, 
+            index=self.L_bins[:-1], 
+            columns=self.MLT_bins[:-1]
+            )
+        df.to_csv(save_path)
+        return save_path
+
+    def _bin_data(self, merged):
         """
         Groups the SAMPEX data in each L and MLT and calculates self.stat statistic
         on the grouped counts.
@@ -157,9 +172,12 @@ if __name__ == '__main__':
     try:
         m.loop()
     finally:
-        plt.pcolormesh(MLT_bins, L_bins, m.mean)
-        plt.colorbar(label='mean counts')
-        plt.xlabel('MLT')
-        plt.ylabel('L-Shell')
-        plt.yscale('log')
+        m.save_map('test_map.csv')
+        _, ax = plt.subplots()
+        p = ax.pcolormesh(MLT_bins, L_bins, m.mean, norm=matplotlib.colors.LogNorm())
+        plt.colorbar(p, label='mean > 1 MeV counts')
+        ax.set_title(f'SAMPEX-HILT | L-MLT map\n{m.dates[0].date()} to {m.dates[-1].date()}')
+        ax.set_xlabel('MLT')
+        ax.set_ylabel('L-Shell')
+        plt.tight_layout()
         plt.show()
