@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import pathlib
 import re
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import sampex
@@ -29,7 +30,8 @@ class L_MLT_Map:
         """
         self.L_bins = L_bins
         self.MLT_bins = MLT_bins
-        self.H = np.zeros((L_bins.shape[0]-1, MLT_bins.shape[0]-1))
+        self.mean = np.zeros((L_bins.shape[0]-1, MLT_bins.shape[0]-1))
+        self.mean_sampes = np.zeros((L_bins.shape[0]-1, MLT_bins.shape[0]-1))
         self.instrument = instrument.upper()
         self.counts_col = counts_col.lower()
         assert instrument.upper() in ['HILT', 'PET', 'LICA']
@@ -47,7 +49,7 @@ class L_MLT_Map:
         """
         Loop over the SAMPEX files and bin each day's data by L and MLT.
         """
-        for date in progressbar(self.dates):
+        for date in progressbar(self.dates[:10]):
             print(f'Processing SAMPEX-{self.instrument} on {date.date()}')
             try:
                 self.hilt = sampex.HILT(date)
@@ -63,6 +65,8 @@ class L_MLT_Map:
                     continue
                 elif 'State 1 and 3 are not implemented yet.' in str(err):
                     continue
+                elif 'data is not in order for' in str(err):
+                    continue
                 else:
                     raise
 
@@ -76,9 +80,15 @@ class L_MLT_Map:
                 else:
                     raise
             # Magic merging!
-            merged = pd.merge_asof(self.hilt.data, self.attitude.data, left_index=True, 
-                right_index=True, tolerance=pd.Timedelta(seconds=3), 
-                direction='nearest')
+            try:
+                merged = pd.merge_asof(self.hilt.data, self.attitude.data, left_index=True, 
+                    right_index=True, tolerance=pd.Timedelta(seconds=3), 
+                    direction='nearest')
+            except ValueError as err:
+                if 'keys must be sorted' in str(err):
+                    continue
+                else:
+                    raise
             
             self.bin_data(merged)
 
@@ -98,10 +108,17 @@ class L_MLT_Map:
                 ]
                 if filtered_data.shape[0] == 0:
                     continue
-                # TODO: Think about how to calculate the incremental mean
+                # Calculate incremental mean since were looping over many days.
                 # https://math.stackexchange.com/questions/106700/incremental-averaging
                 # https://ubuntuincident.wordpress.com/2012/04/25/calculating-the-average-incrementally/
-                self.H[i, j] += filtered_data.mean()[self.counts_col]
+                # Maybe this for loop can be replaced by itertools.accumulate?
+                # for _, row in filtered_data.iterrows():
+                #     adjustment = (row[self.counts_col] - self.mean[i, j])/self.mean_sampes[i, j]
+                #     self.mean[i, j] += adjustment
+                #     self.mean_sampes[i, j] += 1
+                self.mean[i,j] = (
+                    self.mean_sampes[i, j]*self.mean[i,j] + np.sum(filtered_data[self.counts_col])
+                    )/(self.mean_sampes[i, j]+filtered_data.shape[0])
         return
 
     def _yeardoy2date(self, yeardoy):
@@ -136,4 +153,9 @@ if __name__ == '__main__':
     MLT_bins = np.arange(0, 24.1)
 
     m = L_MLT_Map(L_bins, MLT_bins)
-    m.loop()
+    try:
+        m.loop()
+    finally:
+        plt.pcolormesh(MLT_bins, L_bins, m.mean)
+        plt.colorbar()
+        plt.show()
