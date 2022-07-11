@@ -49,7 +49,7 @@ class L_MLT_Map:
         """
         Loop over the SAMPEX files and bin each day's data by L and MLT.
         """
-        for date in progressbar(self.dates[:10]):
+        for date in progressbar(self.dates):
             print(f'Processing SAMPEX-{self.instrument} on {date.date()}')
             try:
                 self.hilt = sampex.HILT(date)
@@ -157,5 +157,7 @@ if __name__ == '__main__':
         m.loop()
     finally:
         plt.pcolormesh(MLT_bins, L_bins, m.mean)
-        plt.colorbar()
+        plt.colorbar(label='mean counts')
+        plt.xlabel('MLT')
+        plt.ylabel('L-Shell')
         plt.show()
