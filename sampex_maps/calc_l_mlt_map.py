@@ -37,7 +37,7 @@ class L_MLT_Map:
         self.mean_sampes = np.zeros((L_bins.shape[0]-1, MLT_bins.shape[0]-1))
         self.instrument = instrument.upper()
         self.counts_col = counts_col.lower()
-        self.last_processed_path = pathlib.Path(__file__).parent / 'data', 'last_processed_date.txt'
+        self.last_processed_path = pathlib.Path(__file__).parent / 'data' / 'last_processed_date.txt'
         assert instrument.upper() in ['HILT', 'PET', 'LICA']
 
         if times is not None:
@@ -147,6 +147,7 @@ class L_MLT_Map:
                 self.mean[i,j] = (
                     self.mean_sampes[i, j]*self.mean[i,j] + np.sum(filtered_data[self.counts_col])
                     )/(self.mean_sampes[i, j]+filtered_data.shape[0])
+                self.mean_sampes[i,j] += filtered_data.shape[0]
         return
 
     def _yeardoy2date(self, yeardoy):
