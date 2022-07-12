@@ -95,8 +95,12 @@ class L_MLT_Map:
                     raise
             
             self._bin_data(merged)
+
+            # Save the progress.
             with open(self.last_processed_path, 'w') as f:
                 f.write(date.isoformat())
+            np.save(self.last_processed_path.parent / 'z_mean.npy', self.mean)
+            np.save(self.last_processed_path.parent / 'z_mean_sampes.npy', self.mean_sampes)
         return
 
     def save_map(self, filename, save_dir=None):
@@ -180,6 +184,8 @@ class L_MLT_Map:
                 f'{last_processed_time} at {self.last_processed_path=}'
                 )
             dates = [date for date in dates if date > last_processed_time]
+            self.mean = np.load(self.last_processed_path.parent / 'z_mean.npy')
+            self.mean_sampes = np.load(self.last_processed_path.parent / 'z_mean_sampes.npy')
         return dates
 
 if __name__ == '__main__':
