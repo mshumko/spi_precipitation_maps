@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import dateutil.parser
 import pathlib
 import re
 
@@ -36,6 +37,7 @@ class L_MLT_Map:
         self.mean_sampes = np.zeros((L_bins.shape[0]-1, MLT_bins.shape[0]-1))
         self.instrument = instrument.upper()
         self.counts_col = counts_col.lower()
+        self.last_processed_path = pathlib.Path(__file__).parent / 'data', 'last_processed_date.txt'
         assert instrument.upper() in ['HILT', 'PET', 'LICA']
 
         if times is not None:
@@ -93,6 +95,8 @@ class L_MLT_Map:
                     raise
             
             self._bin_data(merged)
+            with open(self.last_processed_path, 'w') as f:
+                f.write(date.isoformat())
         return
 
     def save_map(self, filename, save_dir=None):
@@ -166,6 +170,16 @@ class L_MLT_Map:
             dates = [self._yeardoy2date(date_str) for date_str in date_strs]
         else:
             raise NotImplementedError
+
+        # Filter down the dates if they have already been processed.
+        if self.last_processed_path.exists():
+            with open(self.last_processed_path, 'r') as f:
+                last_processed_time = dateutil.parser.parse(f.read())
+            print(
+                f'Found a file with the final processed day: '
+                f'{last_processed_time} at {self.last_processed_path=}'
+                )
+            dates = [date for date in dates if date > last_processed_time]
         return dates
 
 if __name__ == '__main__':
