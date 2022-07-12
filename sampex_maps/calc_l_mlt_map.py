@@ -95,11 +95,15 @@ class L_MLT_Map:
             self._bin_data(merged)
         return
 
-    def save_map(self, filename):
+    def save_map(self, filename, save_dir=None):
         """
         Save map to a csv file.
         """
-        save_path = pathlib.Path(__file__).parent / 'data' / filename
+        if save_dir is None:
+            save_dir = pathlib.Path(__file__).parent / 'data'
+        else:
+            save_dir = pathlib.Path(save_dir)  # cast just in case
+        save_path = save_dir / filename
         df = pd.DataFrame(
             data=self.mean, 
             index=self.L_bins[:-1], 
