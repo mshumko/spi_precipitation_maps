@@ -197,12 +197,15 @@ if __name__ == '__main__':
     try:
         m.loop()
     finally:
-        m.save_map('test_map.csv')
-        _, ax = plt.subplots()
-        p = ax.pcolormesh(MLT_bins, L_bins, m.mean, norm=matplotlib.colors.LogNorm())
-        plt.colorbar(p, label='mean > 1 MeV counts')
-        ax.set_title(f'SAMPEX-HILT | L-MLT map\n{m.dates[0].date()} to {m.dates[-1].date()}')
-        ax.set_xlabel('MLT')
-        ax.set_ylabel('L-Shell')
+        m.save_map('sampex_hilt_l_mlt_map.csv')
+        _, ax = plt.subplots(2, 1, sharex=True)
+        p = ax[0].pcolormesh(MLT_bins, L_bins, m.mean, norm=matplotlib.colors.LogNorm())
+        p2 = ax[1].pcolormesh(MLT_bins, L_bins, m.mean_sampes, norm=matplotlib.colors.LogNorm())
+        plt.colorbar(p, ax=ax[0], label='mean > 1 MeV counts')
+        plt.colorbar(p2, ax=ax[1], label='Number of sampes')
+        ax[0].set_title(f'SAMPEX-HILT | L-MLT map\n{m.dates[0].date()} to {m.dates[-1].date()}')
+        ax[-1].set_xlabel('MLT')
+        for a in ax:
+            a.set_ylabel('L-Shell')
         plt.tight_layout()
         plt.show()
