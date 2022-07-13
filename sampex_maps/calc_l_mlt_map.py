@@ -195,8 +195,7 @@ if __name__ == '__main__':
 
     m = L_MLT_Map(L_bins, MLT_bins)
     try:
-        # m.loop()
-        pass
+        m.loop()
     finally:
         m.save_map('sampex_hilt_l_mlt_map.csv')
         # _, ax = plt.subplots(2, 1, sharex=True)
