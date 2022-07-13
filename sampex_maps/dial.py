@@ -26,18 +26,12 @@ class Dial:
         colorbar_kwargs={} - The dictionary of kwargs passed into plt.colorbar()
         """
         self.L_labels = L_labels
-
+        # Turn off the grid to prevent a matplotlib deprecation warning 
+        # (see https://matplotlib.org/3.5.1/api/prev_api_changes/api_changes_3.5.0.html#auto-removal-of-grids-by-pcolor-and-pcolormesh)
+        self.ax.grid(False) 
         angular_grid, radial_grid = np.meshgrid(self.angular_bins, self.radial_bins)
-
-        # Try-except block deals with the dimensions of the mesh and taransposes it
-        # if necessary.
-        try:
-            p = self.ax.pcolormesh(angular_grid*np.pi/12, radial_grid, self.H.T, **mesh_kwargs)
-        except TypeError as err:
-            if 'Dimensions of C' in str(err):
-                p = self.ax.pcolormesh(angular_grid*np.pi/12, radial_grid, self.H, **mesh_kwargs)
-            else:
-                raise
+        p = self.ax.pcolormesh(angular_grid*np.pi/12, radial_grid, self.H, **mesh_kwargs)
+        
 
         self.draw_earth()
         self._plot_params()
@@ -63,11 +57,10 @@ class Dial:
     def _plot_params(self):
         # Draw L shell contours and get L and MLT labels 
         L_labels_names = self._draw_L_contours()
-        mlt_labels = (self.ax.get_xticks()*12/np.pi).astype(int)
-        # Sun facing up.
+        mlt_labels = np.round(self.ax.get_xticks()*12/np.pi).astype(int)
         self.ax.set_xlabel('MLT')
         self.ax.set_theta_zero_location("S") # Midnight at bottom
-        self.ax.set_xticklabels(mlt_labels) # Transform back from 0->2pi to 0->24.
+        self.ax.set_xticks(mlt_labels*np.pi/12, labels=mlt_labels)
         self.ax.set_yticks(self.L_labels)
         self.ax.set_yticklabels(L_labels_names, fontdict={'horizontalalignment':'right'})
         return

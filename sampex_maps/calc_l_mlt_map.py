@@ -10,7 +10,7 @@ import numpy as np
 import sampex
 import progressbar
 
-# from sampex_maps.utils import progressbar
+from sampex_maps.dial import Dial
 
 class L_MLT_Map:
     def __init__(self, L_bins, MLT_bins, instrument='HILT', counts_col='counts', times=None) -> None:
@@ -195,17 +195,30 @@ if __name__ == '__main__':
 
     m = L_MLT_Map(L_bins, MLT_bins)
     try:
-        m.loop()
+        # m.loop()
+        pass
     finally:
         m.save_map('sampex_hilt_l_mlt_map.csv')
-        _, ax = plt.subplots(2, 1, sharex=True)
-        p = ax[0].pcolormesh(MLT_bins, L_bins, m.mean, norm=matplotlib.colors.LogNorm())
-        p2 = ax[1].pcolormesh(MLT_bins, L_bins, m.mean_sampes, norm=matplotlib.colors.LogNorm())
-        plt.colorbar(p, ax=ax[0], label='mean > 1 MeV counts')
-        plt.colorbar(p2, ax=ax[1], label='Number of sampes')
-        ax[0].set_title(f'SAMPEX-HILT | L-MLT map\n{m.dates[0].date()} to {m.dates[-1].date()}')
-        ax[-1].set_xlabel('MLT')
-        for a in ax:
-            a.set_ylabel('L-Shell')
+        # _, ax = plt.subplots(2, 1, sharex=True)
+        fig = plt.figure(figsize=(9, 4))
+        ax = [plt.subplot(1, 2, i, projection='polar') for i in range(1, 3)]
+
+        L_labels = [2,4,6]
+        cmap = 'viridis'
+
+        dial1 = Dial(ax[0], MLT_bins, L_bins, m.mean)
+        dial1.draw_dial(L_labels=L_labels,
+            mesh_kwargs={'norm':matplotlib.colors.LogNorm(), 'cmap':cmap},
+            colorbar_kwargs={'label':'mean > 1 MeV counts', 'pad':0.1})
+        dial2 = Dial(ax[1], MLT_bins, L_bins, m.mean_sampes)
+        dial2.draw_dial(L_labels=L_labels,
+            mesh_kwargs={'norm':matplotlib.colors.LogNorm(), 'cmap':cmap},
+            colorbar_kwargs={'label':'Number of sampes', 'pad':0.1})
+
+        for ax_i in ax:
+            ax_i.set_rlabel_position(235)
+            ax_i.tick_params(axis='y', colors='white')
+
+        plt.suptitle(f'SAMPEX-HILT | L-MLT map\n{m.dates[0].date()} to {m.dates[-1].date()}')
         plt.tight_layout()
         plt.show()
