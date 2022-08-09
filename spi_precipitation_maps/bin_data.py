@@ -10,7 +10,7 @@ import numpy as np
 import sampex
 import progressbar
 
-from sampex_maps.dial import Dial
+from spi_precipitation_maps.dial import Dial
 
 class L_MLT_Map:
     def __init__(self, L_bins, MLT_bins, instrument='HILT', counts_col='counts', times=None) -> None:
