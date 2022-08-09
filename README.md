@@ -1,6 +1,9 @@
 # Introduction
 This package contains the software to create precipitation maps for the Space Precipitation and Impacts (SPI) ISFM project.
 
+![Example SAMPEX-HILT map](example_sampex_l_mlt_map.png)
+*Example of a SAMPEX-HILT precipitation map as a function of L and MLT.*
+
 # Installation
 To install as a developer run:
 
@@ -68,5 +71,3 @@ You installed `sampex` as part of the above installation. If you downloaded the 
 
 # Visualizing the Precipitation Maps
 So far I added the L-MLT `Dial` plot visualization class. It is also called by `spi_precipitation_maps/bin_sampex_hilt.py`
-
-![Example SAMPEX-HILT map](example_sampex_l_mlt_map.png)
