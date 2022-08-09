@@ -118,7 +118,7 @@ class Bin_Data:
                 #     self.mean[i, j] += adjustment
                 #     self.mean_sampes[i, j] += 1
                 self.mean[i,j] = (
-                    self.mean_sampes[i, j]*self.mean[i,j] + np.sum(filtered_data[self.counts_col])
+                    self.mean_sampes[i, j]*self.mean[i,j] + np.sum(filtered_data[self.precipitation_col])
                     )/(self.mean_sampes[i, j]+filtered_data.shape[0])
                 self.mean_sampes[i,j] += filtered_data.shape[0]
         return

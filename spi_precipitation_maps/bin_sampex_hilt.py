@@ -1,3 +1,4 @@
+from datetime import datetime
 import pathlib
 import re
 
@@ -10,6 +11,7 @@ import matplotlib.colors
 from spi_precipitation_maps.bin_data import Bin_Data
 from spi_precipitation_maps.dial import Dial
 
+
 class Bin_SAMPEX_HILT:
     """
     Bins the state 4 HILT data between 1997 and 2012.
@@ -19,7 +21,7 @@ class Bin_SAMPEX_HILT:
     `python3 -m sampex init` in the command line to change that directory.
     """
     def __init__(self,) -> None:
-        self.dates = self._get_dates()
+        self._get_dates()
         return
 
     def __iter__(self):
@@ -79,7 +81,7 @@ class Bin_SAMPEX_HILT:
             pathlib.Path(sampex.config['data_dir']).rglob(file_name_glob))
         if len(self.hilt_paths):
             date_strs = [re.findall(r"\d+", str(f.name))[0] for f in self.hilt_paths]
-            dates = [sampex.load.yeardoy2date(date_str) for date_str in date_strs]
+            self.dates = [sampex.load.yeardoy2date(date_str) for date_str in date_strs]
         else:
             # Otherwise get the list of filenames online.
             downloader = sampex.Downloader(
@@ -89,14 +91,16 @@ class Bin_SAMPEX_HILT:
             assert len(downloaders), f'{len(downloaders)} HILT files found at {downloader.url}'
 
             date_strs = [re.findall(r"\d+", str(d.name()))[0] for d in downloaders]
-            dates = [sampex.load.yeardoy2date(date_str) for date_str in date_strs]
-        return dates
+            self.dates = [sampex.load.yeardoy2date(date_str) for date_str in date_strs]
+        self.dates = [date for date in self.dates if date > datetime(1997, 1, 1)]
+        return self.dates
 
 if __name__ == '__main__':
     L_bins = np.arange(2, 11)
     MLT_bins = np.arange(0, 24.1)
 
     m = Bin_Data(L_bins, MLT_bins, 'L_Shell', 'MLT', 'counts', Bin_SAMPEX_HILT)
+    # m.bin()
     try:
         m.bin()
     finally:
@@ -121,6 +125,6 @@ if __name__ == '__main__':
             ax_i.set_rlabel_position(235)
             ax_i.tick_params(axis='y', colors='white')
 
-        plt.suptitle(f'SAMPEX-HILT | L-MLT map\n{m.dates[0].date()} to {m.dates[-1].date()}')
+        plt.suptitle(f'SAMPEX-HILT | L-MLT map')
         plt.tight_layout()
         plt.show()
