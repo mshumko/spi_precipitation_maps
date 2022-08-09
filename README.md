@@ -54,9 +54,19 @@ m = Bin_Data(L_bins, MLT_bins, 'L_Shell', 'MLT', 'counts', My_Instrument)
 m.bin()
 m.save_map('test_l_mlt_map.csv')
 ```
+The reason for the `My_Instrument` class is you can closely control what data it `yields` in `__iter__()`. This is useful, for example, for binning
+- other variables,
+- binning by storm phases,
+- etc.
+
 If this seems rather abstract, below I describe one such example (in a module).
 
 ## SAMPEX
 The `spi_precipitation_maps/bin_sampex_hilt.py` example module bins the SAMPEX-HILT state4 data by L-Shell and MLT. It heavily utilizes the [sampex](https://sampex.readthedocs.io/en/latest/) package to load (and optionally download) the data for the HILT, PET, and LICA instruments.
 
 You installed `sampex` as part of the above installation. If you downloaded the [SAMPEX data](https://izw1.caltech.edu/sampex/DataCenter/data.html) already, you need to tell `sampex` where to find it via the `python3 -m sampex config` command-line command. Otherwise, `sampex` will download the data as needed.
+
+# Visualizing the Precipitation Maps
+So far I added the L-MLT `Dial` plot visualization class. It is also called by `spi_precipitation_maps/bin_sampex_hilt.py`
+
+![Example SAMPEX-HILT map](example_sampex_l_mlt_map.png)

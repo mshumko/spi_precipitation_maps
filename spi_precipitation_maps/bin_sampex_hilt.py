@@ -30,21 +30,7 @@ class Bin_SAMPEX_HILT:
         """
         for date in self.dates:
             print(f'Processing SAMPEX-HILT on {date.date()}')
-            # try:
             self.hilt = sampex.HILT(date).load()
-            # except (ValueError, AssertionError, NotImplementedError) as err:
-            #     # Sometimes the HILT time stamps are out of order. We think the
-            #     # data quality is compromised so we ignore it.
-            #     if 'data is not in order for' in str(err):
-            #         continue
-            #     elif '3 matched HILT files found.' in str(err):
-            #         continue
-            #     elif 'State 1 and 3 are not implemented yet.' in str(err):
-            #         continue
-            #     elif 'data is not in order for' in str(err):
-            #         continue
-            #     else:
-            #         raise
 
             try:
                 self.attitude = sampex.Attitude(date).load()
