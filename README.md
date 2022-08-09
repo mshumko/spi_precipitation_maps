@@ -18,14 +18,45 @@ or
 python3 -m pip install -r requirements.txt 
 ```
 
-# Configuration
+# Producing Precipitation Maps
+I wrote the `Bin_Data` class in the `spi_precipitation_maps/bin_data.py` module (you can import it as: `from spi_precipitation_maps.bin_data import Bin_Data`) that bins a precipitation variable (`precipitation_col`) in each `x_bin` and `y_bin`, each corresponding to the `x_col` and `y_col` data variables.
+
+I designed `Bin_Data` with a narrow scope---it only bins the precipitation data. It does not know where the data lives, or how to load it. You must supply that information via the `instrument` argument to `Bin_Data`. 
+
+Put simply, the class that you pass into the `instrument` arg must look like this:
+
+```python
+class My_Instrument:
+    def __init__(self,):
+        # Initialization steps for my instrument.
+        return
+
+    def __iter__(self):
+        # This is the important method that Bin_Data calls. 
+        # It must yield my data one day (or chunk) at a time.
+        for date in dates:
+            data = self.load_my_instrument_data(date, ...)
+            yield data
+    
+    def load_my_instrument_data(date, ...):
+        # Load my data and apply the necessary 
+        # cleaning steps here.
+        return data
+```
+
+Now you pass `My_Instrument` into `Bin_Data` via:
+
+```python
+L_bins = np.arange(2, 11)
+MLT_bins = np.arange(0, 24.1)
+
+m = Bin_Data(L_bins, MLT_bins, 'L_Shell', 'MLT', 'counts', My_Instrument)
+m.bin()
+m.save_map('test_l_mlt_map.csv')
+```
+If this seems rather abstract, below I describe one such example (in a module).
 
 ## SAMPEX
-To work with the `sampex_maps` package, you'll need to 
-1. Download the [SAMPEX data](https://izw1.caltech.edu/sampex/DataCenter/data.html) 
-2. Tell the [sampex](https://pypi.org/project/sampex/) dependency where to find the SAMPEX data by running `python3 -m sampex config`.
+The `spi_precipitation_maps/bin_sampex_hilt.py` example module bins the SAMPEX-HILT state4 data by L-Shell and MLT. It heavily utilizes the [sampex](https://sampex.readthedocs.io/en/latest/) package to load (and optionally download) the data for the HILT, PET, and LICA instruments.
 
-## Whats up with the `python3 -m ... config` step?
-A lot of data science projects load data external to the source code (a good practice) so `project/__main__.py` creates a `project/config.ini` file that is loaded on import by `project/__init__.py`. In this case, replace `project` with `sampex_maps` or other package in this directory.
-
-To execute `project/__main__.py`, first install `project` with the steps above and then run `python3 -m project config` and answer the prompt. You will now see a `project/config.ini` with two paths: one to this project and the other to the specified data directory. One loaded by `project/__init__.py`, this dictionary is accessed via `import project.config`.
+You installed `sampex` as part of the above installation. If you downloaded the [SAMPEX data](https://izw1.caltech.edu/sampex/DataCenter/data.html) already, you need to tell `sampex` where to find it via the `python3 -m sampex config` command-line command. Otherwise, `sampex` will download the data as needed.

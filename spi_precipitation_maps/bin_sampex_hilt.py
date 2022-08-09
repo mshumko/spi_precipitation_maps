@@ -100,7 +100,6 @@ if __name__ == '__main__':
     MLT_bins = np.arange(0, 24.1)
 
     m = Bin_Data(L_bins, MLT_bins, 'L_Shell', 'MLT', 'counts', Bin_SAMPEX_HILT)
-    # m.bin()
     try:
         m.bin()
     finally:
