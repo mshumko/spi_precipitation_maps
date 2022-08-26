@@ -26,7 +26,7 @@ I wrote the `Bin_Data` class in the `spi_precipitation_maps/bin_data.py` module 
 
 I designed `Bin_Data` with a narrow scope---it only bins the precipitation data. It does not know where the data lives, or how to load it. You must supply that information via the `instrument` argument to `Bin_Data`. 
 
-Put simply, the class that you pass into the `instrument` arg must look like this:
+Put simply, the class that you pass as the `instrument` argument must have the following structure:
 
 ```python
 class My_Instrument:
